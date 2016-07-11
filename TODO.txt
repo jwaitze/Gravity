@@ -1,0 +1,5 @@
+- differentiate volume and mass, so that there can be massively dense objects too.
+- one of two circles of the same mass should be able to absorb the other, based upon some parameter, such as a higher velocity
+- add a function for adding different kinds of groups of orbiting objects
+- add a function for adding an object to the orbit of another object
+- 
