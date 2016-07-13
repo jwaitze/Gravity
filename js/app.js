@@ -1,6 +1,4 @@
-function networkMain(socket) {};
-function gameMain() {
-    updateFactors();
+function gravityMain() {
     manageSpawns();
     manageCollisions();
     manageBlackHoleBots();
@@ -34,53 +32,6 @@ function getVectorY(magnitude, direction) {
 
 function getNewVelocity(sumX, sumY) {
     return Math.sqrt(Math.pow(sumX, 2) + Math.pow(sumY, 2))
-}
-
-// function getCollisionTime(targetX, targetY, sourceX, sourceY, targetVelocity, sourceVelocity, targetDirection, positiveVersion) {
-//     if(-1*Math.pow(targetVelocity, 2)*Math.pow(Math.sin(targetDirection), 2) - Math.pow(targetVelocity, 2)*Math.pow(Math.cos(targetDirection), 2) + sourceVelocity == 0)
-//         return Infinity;
-
-//     var positiveFactor = -1;
-//     if(positiveVersion)
-//         positiveFactor = 1;
-
-//     return (positiveFactor*0.5*Math.sqrt(Math.pow(2*sourceX*targetVelocity*Math.cos(targetDirection) - 2*targetX*targetVelocity*Math.cos(targetDirection) + 2*targetVelocity*sourceY*Math.sin(targetDirection) - 2*targetVelocity*targetY*Math.sin(targetDirection), 2) - 4*(Math.pow(sourceX, 2) - 2*sourceX*targetX + Math.pow(targetX, 2) + Math.pow(sourceY, 2) - 2*sourceY*targetY + Math.pow(targetY, 2))*(Math.pow(targetVelocity, 2)*Math.pow(Math.sin(targetDirection), 2) + Math.pow(targetVelocity, 2)*Math.pow(Math.cos(targetDirection), 2) - sourceVelocity)) + sourceX*targetVelocity*Math.cos(targetDirection) - targetX*targetVelocity*Math.cos(targetDirection) + targetVelocity*sourceY*Math.sin(targetDirection) - targetVelocity*targetY*Math.sin(targetDirection))/(-1*Math.pow(targetVelocity, 2)*Math.pow(Math.sin(targetDirection), 2) - Math.pow(targetVelocity, 2)*Math.pow(Math.cos(targetDirection), 2) + sourceVelocity);
-// }
-
-// function getCollisionCoordinates(target, source) {
-//     var targetX = circles[target].x,
-//         targetY = circles[target].y,
-//         sourceX = circles[source].x,
-//         sourceY = circles[source].y,
-//         targetVelocity = circles[target].velocity,
-//         sourceVelocity = 6,
-//         targetDirection = circles[target].direction;
-
-//     var timeA = getCollisionTime(targetX, targetY, sourceX, sourceY, targetVelocity, sourceVelocity, targetDirection, true),
-//         timeB = getCollisionTime(targetX, targetY, sourceX, sourceY, targetVelocity, sourceVelocity, targetDirection, false);
-
-//     console.log(targetVelocity + " " + targetDirection + " " + timeA + " " + timeB);
-
-//     var collisionX = targetX + getVectorX(targetVelocity*timeB, targetDirection),
-//         collisionY = targetY + getVectorX(targetVelocity*timeB, targetDirection);
-
-//     if(Math.sqrt(Math.pow(collisionX - sourceX, 2) + Math.pow(collisionY - sourceY, 2)) != sourceVelocity*timeB) {
-//         collisionX = targetX + getVectorX(targetVelocity*timeA, targetDirection);
-//         collisionY = targetY + getVectorX(targetVelocity*timeA, targetDirection);
-//     }
-
-//     return {x:collisionX, y:collisionY};
-// }
-
-function updateFactors() {
-    var smallerAxis = screenHeight,
-        largerAxis = screenWidth;
-    if(screenHeight > screenWidth) {
-        smallerAxis = screenWidth;
-        largerAxis = screenHeight;
-    }
-    sizeFactor = 0.0010214504596527069 * smallerAxis;
-    countFactor = 0.0005208333333333333 * largerAxis;
 }
 
 function addCircle(x, y, velocity, direction, mass, iC, oC, type, id) {
@@ -214,7 +165,7 @@ function getAccelerationDueToGravity(massSource, massTarget, distance) { // retu
     // F~ = G*((m1*m2)/(distance^2))
     // F = ma, a = F/m
     // a = (G*((m1*m2)/(distance^2)))/m
-    var G = 3;
+    var G = 5;
     return (G*((massSource*massTarget)/(distance*distance)))/massSource;
 }
 
@@ -235,7 +186,7 @@ function manageGravity(circle) {
         //console.log(acceleration);
         circles[circle].velocity = getNewVelocity(vectorOriginalX + vectorAddX, vectorOriginalY + vectorAddY);
         circles[circle].direction = getNewDirection(vectorOriginalX + vectorAddX, vectorOriginalY + vectorAddY);
-        console.log(circles[circle].velocity + ' ' + circles[circle].direction);
+        //console.log(circles[circle].velocity + ' ' + circles[circle].direction);
     }
 }
 
@@ -343,7 +294,7 @@ function manageCollisions() {
                             if(circles[s].type == "player") {
                                 console.log(s + "(mass:" + 3 * Math.floor(circles[s].mass) + ") absorbed by " + l + "(mass:" + 3 * Math.floor(circles[l].mass) + ") after " + ((new Date).getTime() - circles[s].creationTime) / 1E3 + " secs");
                                 if(s == 0)
-                                    gameOver = true;
+                                    gravityOver = true;
                             }
                        }
                     }
@@ -356,8 +307,8 @@ function manageCollisions() {
 
 function ejectCircle(velocity, i, targetX, targetY) {
     var targetDirection = getDirection(circles[i].x, circles[i].y, targetX, targetY);
-    circles[i].mass -= circles[i].mass / 50;
-    ejectMass = circles[i].mass / 5;
+    circles[i].mass -= circles[i].mass / 75;
+    ejectMass = circles[i].mass / 8;
     var startX = circles[i].x + getVectorX(sizeFactor*circles[i].mass, targetDirection),
         startY = circles[i].y + getVectorY(sizeFactor*circles[i].mass, targetDirection),
         oppositeDirection = (targetDirection + 180) % 360,
@@ -371,7 +322,7 @@ function ejectCircle(velocity, i, targetX, targetY) {
     newEjectY = getVectorY(velocity, targetDirection);
     newSourceX = getVectorX(circles[i].velocity, circles[i].direction);
     newSourceY = getVectorY(circles[i].velocity, circles[i].direction);
-    velocity = getNewVelocity(newEjectX + newSourceX, newEjectY + newSourceY) - circles[i].velocity + 2 * velocity;
+    velocity = getNewVelocity(newEjectX + newSourceX, newEjectY + newSourceY) - circles[i].velocity + 2*velocity;
     addCircle(startX, startY, velocity, targetDirection, ejectMass, circles[i].innerColor, circles[i].outerColor, "ejected", circles[i].id)
 }
 
@@ -452,14 +403,8 @@ function drawCircles() {
 
         drawCircle(sc[i].x || screenWidth / 2, sc[i].y || screenHeight / 2, sizeFactor * sc[i].mass, sides, sc[i].innerColor, sc[i].outerColor, transparency, shadow);
         if(sc[i].mass > 16) {
-            var playerHasName = playerName.length > 0 && sc[i].type == "player";
             var y = sc[i].y + 5;
-            if(playerHasName)
-                y += 15;
-
             drawValue(Math.floor(sc[i].mass) * 3, sc[i].x, y);
-            if(playerHasName)
-                drawValue(playerName, sc[i].x, y - 20);
         }
     }
 }
@@ -467,18 +412,6 @@ function drawCircles() {
 function drawCircle(x, y, radius, sides, innerColor, outerColor, transparency, shadow) {
     var a = 0, b = 0;
     canvas.beginPath();
-
-    //var distanceFromMiddle = getDistance(screenWidth/2, screenHeight/2, x, y);
-    //var directionFromMiddle = getDirection(screenWidth/2, screenHeight/2, x, y);
-    //var middleX = getVectorX(distanceFromMiddle, directionFromMiddle);
-    //var middleY = getVectorY(distanceFromMiddle, directionFromMiddle);
-    //var newX = (Math.abs(middleX)/(screenWidth/2)) * (x + getVectorX(radius, directionFromMiddle)),
-    //  newY = (Math.abs(middleY)/(screenWidth/2)) * (y + getVectorY(radius, directionFromMiddle));
-    //if(innerColor == "#00DFF0")
-    //  console.log();
-    //var gradient=canvas.createRadialGradient(newX,newY,radius*.4,newX,newY,radius*.9);
-    //gradient.addColorStop(0,"white");
-    //gradient.addColorStop(1,innerColor);
 
     canvas.fillStyle = innerColor;
     canvas.lineWidth = 5;
@@ -500,12 +433,9 @@ function drawCircle(x, y, radius, sides, innerColor, outerColor, transparency, s
 function drawValue(v, x, y) {
     canvas.shadowBlur = 0;
     canvas.transparency = 1;
-    canvas.fillStyle = "#2ecc71";
-    canvas.strokeStyle = "#27ae60";
-    if(screenWidth < 480)
-        canvas.font = "bold 14px Verdana";
-    else
-        canvas.font = "bold 16px Verdana";
+    canvas.fillStyle = "#000000";
+    canvas.strokeStyle = "#000000";
+    canvas.font = "14px Verdana";
     canvas.textAlign = "center";
     canvas.lineWidth = 2;
     canvas.fillText(v, x, y);
@@ -521,25 +451,21 @@ window.requestAnimFrame = function() {
     }
 }();
 
-function startGame() {
-    gameOver = false;
-    gameTime = (new Date).getTime();
-    playerName = playerNameInput.value.replace(/(<([^>]+)>)/ig, "");
-    document.getElementById("gameAreaWrapper").style.display = "block";
-    document.getElementById("startMenuWrapper").style.display = "none";
+function startGravity() {
+    gravityOver = false;
+    gravityTime = (new Date).getTime();
+    document.getElementById("gravityAreaWrapper").style.display = "block";
     circles = [];
-    addCircle(screenWidth / 2, screenHeight / 2, 1.2, 305, 50, null, null, "player", null);
-    addCircle(screenWidth / 2.5, screenHeight / 2.5, 1.2, 125, 49.5, null, null, "floater", null);
-    addCircle(screenWidth / 3.75, screenHeight / 3.75, 2, 315, 5, null, null, "floater", null);
+    addCircle(screenWidth / 2, screenHeight / 2, 2, 305, 50, null, null, "player", null);
+    addCircle(screenWidth / 2.5, screenHeight / 2.5, 2, 125, 49, null, null, "floater", null);
+    addCircle(screenWidth / 3.75, screenHeight / 3.75, 3, 315, 5, null, null, "floater", null);
     //addCircle(screenWidth / 3.75, screenHeight / 3.75, 2, 135, 5, null, null, "floater", null);
     animloop();
 }
 
 function animloop() {
-    if(gameOver) {
-        document.getElementById("gameAreaWrapper").style.display = "none";
-        document.getElementById("startMenuWrapper").style.display = "inline";
-        document.querySelector("#startMenu .gameover").style.display = "inline";
+    if(false) {
+        document.getElementById("gravityAreaWrapper").style.display = "none";
         cancelAnimationFrame(animloopHandle);
         animloopHandle = undefined;
         return;
@@ -549,11 +475,11 @@ function animloop() {
 }
 
 function appMain() {
-    gameMain();
+    gravityMain();
 }
 
 function mouseClick(e) {
-    ejectCircle(4, 0, e.clientX, e.clientY);
+    ejectCircle(2, 0, e.clientX, e.clientY);
 }
 
 function keys(e) {
@@ -561,9 +487,6 @@ function keys(e) {
         case 32: // [SPACEBAR]
             ejectCircle(12, 0, mousePosition.x, mousePosition.y);
             break;
-        case 13: // [ENTER]
-            if(gameOver)
-                startGame();
     }
 }
 
@@ -581,13 +504,6 @@ function handleFocus(e) {
             c.blur();
             break;
     }
-}
-
-function resizeWindow(e) {
-    screenWidth = window.innerWidth;
-    screenHeight = window.innerHeight;
-    c.width = screenWidth;
-    c.height = screenHeight;
 }
 
 function makeMeBlackHole() {
@@ -608,18 +524,15 @@ var foodCount = 0,
     floaterCount = 0,
     blackholebotCount = 0;
 
-var playerName, playerNameInput = document.getElementById("playerNameInput"),
-    socket,
-    disconnected,
-    gameOver = true,
-    gameTime = 0,
+var gravityOver = true,
+    gravityTime = 0,
     animloopHandle,
-    screenWidth = 600,//window.innerWidth,
-    screenHeight = 600,//window.innerHeight,
+    screenWidth = 600,
+    screenHeight = 600,
     c = document.getElementById("cvs"),
     canvas = c.getContext("2d"),
-    sizeFactor = 0,
-    countFactor = 0;
+    sizeFactor = 0.5,
+    countFactor = 1;
 
 c.width = screenWidth;
 c.height = screenHeight;
@@ -629,11 +542,7 @@ c.addEventListener("mouseover", handleFocus, false);
 c.addEventListener("mouseout", handleFocus, false);
 c.addEventListener("click", mouseClick, false);
 c.addEventListener("keydown", keys, false);
-playerNameInput.addEventListener("keypress", keys, false);
-//window.addEventListener("resize", resizeWindow, false);
 
 window.onload = function() {
-    document.getElementById("startButton").onclick = function() {
-        startGame();
-    };
+    startGravity();
 };
