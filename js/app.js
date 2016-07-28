@@ -266,10 +266,16 @@ function explodeCircle(c) {
 function manageCollisions() {
     for (var a = 0; a < circles.length; a++) {
         for (var b = a + 1; b < circles.length; b++) {
-            if (circles[a] && circles[b] && !circles[a].delete && !circles[b].delete && circles[a].mass != circles[b].mass) {
+            if (circles[a] && circles[b] && !circles[a].delete && !circles[b].delete) {
                 var l = a, s = b;
                 if(circles[a].mass < circles[b].mass) 
                     l = b, s = a;
+                if(circles[a].mass == circles[b].mass) {
+                    if(circles[a].velocity > circles[b].velocity)
+                        l = a, s = b;
+                    else
+                        l = b, s = a;
+                }
                 var distance = getDistance(circles[l].x, circles[l].y, circles[s].x, circles[s].y);
                 if (!(circles[s].type == "blackholebot" || circles[l].type == "blackholebot"
                     && circles[s].type == "exploder" || circles[l].id == circles[s].id
