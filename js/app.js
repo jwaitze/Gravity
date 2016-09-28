@@ -147,7 +147,7 @@ function manageBlackHoleBots() {
             if(circles[i].bot.nextShotTime < utc) {
                 if(circles[i].bot.shotsToFire == 0 || circles[i].bot.nextShotTime == 0) {
                     circles[i].bot.nextShotTime = utc + 1E3 * (2 * Math.random() + 2);
-                    circles[i].bot.shotsToFire = Math.floor(3 * Math.random() + 1);
+                    circles[i].bot.shotsToFire = Math.floor(2 * Math.random() + 1);
                     circles[i].bot.delayBetweenShots = 1E3 * (1.25 * Math.random() + .25);
                 } else {
                     //var collision = getCollisionCoordinates(0, 1);
@@ -170,7 +170,11 @@ function getAccelerationDueToGravity(massSource, massTarget, distance) { // retu
 }
 
 function manageGravity(circle) {
+    if (circles[circle].type == "blackholebot")
+      return;
     for (var i = circles.length - 1; 0 <= i; i--) {
+        if (circles[i].type == "blackholebot" || circles[circle].id == circles[i].id)
+          continue;
         //if (!circles[circle] || !circles[i])
         //    continue
         if (circles[circle].id == circles[i].id)
@@ -196,8 +200,11 @@ function manageMovement() {
         if(circles[i].velocity) {
             circles[i].x += getVectorX(sizeFactor*circles[i].velocity, circles[i].direction);
             circles[i].y += getVectorY(sizeFactor*circles[i].velocity, circles[i].direction);
+
+            if (circles[i].velocity > 20)
+                circles[i].velocity -= .2;
         }
-        
+
         if(circles[i].x >= screenWidth - sizeFactor*circles[i].mass) {
             circles[i].direction = 180 - circles[i].direction;
             circles[i].x = screenWidth - sizeFactor*circles[i].mass;
@@ -218,28 +225,28 @@ function manageMovement() {
 function manageSpawns() {
     updateTypeCounts();
     var velocity = 0;
-    for (var i = 0; i < Math.floor(countFactor*0) - floaterCount; i++) {
+    for (var i = 0; i < Math.floor(countFactor*5) - floaterCount; i++) {
         velocity = 0;
         if(Math.ceil(10 * Math.random()) >= 7)
             velocity = Math.random() * 4 + 1;
-        addCircle(Math.random() * screenWidth, Math.random() * screenHeight, velocity, Math.random()*360, Math.random()*25 + 5, null, null, "floater", null);
+        addCircle(Math.random() * screenWidth, Math.random() * screenHeight, velocity, Math.random()*360, Math.random()*40 + 10, null, null, "floater", null);
     }
 
-    for (var i = 0; i < Math.floor(countFactor*0) - foodCount; i++) {
+    for (var i = 0; i < Math.floor(countFactor*2) - foodCount; i++) {
         velocity = 0;
         if(Math.ceil(Math.random() * 10) >= 3)
             velocity = Math.random() * 1;
         addCircle(Math.random() * screenWidth, Math.random() * screenHeight, velocity, Math.random()*360, Math.random()*2 + 3, null, null, "food", null);
     }
 
-    for (var i = 0; i < Math.floor(countFactor*0) - exploderCount; i++) {
+    for (var i = 0; i < Math.floor(countFactor*1) - exploderCount; i++) {
         velocity = 0;
         if(Math.ceil(Math.random() * 10) >= 7)
             velocity = Math.random() * 3 + 1;
-        addCircle(Math.random() * screenWidth, Math.random() * screenHeight, velocity, Math.random()*360, Math.random()*10 + 30, null, null, "exploder", null);
+        addCircle(Math.random() * screenWidth, Math.random() * screenHeight, velocity, Math.random()*360, Math.random()*10 + 10, null, null, "exploder", null);
     }
 
-    for (var i = 0; i < 0 - blackholebotCount; i++)
+    for (var i = 0; i < 1 - blackholebotCount; i++)
         addCircle(Math.random() * screenWidth, Math.random() * screenHeight, 0, 0, 0, null, null, "blackholebot", null);
 }
 
@@ -257,7 +264,7 @@ function explodeCircle(c) {
     for (var i = 0; i < particles; i++) {
         var x = circles[c].x + getVectorX((sizeFactor*circles[c].mass) / 2, angle),
             y = circles[c].y + getVectorY((sizeFactor*circles[c].mass) / 2, angle);
-        addCircle(x, y, Math.random() * 4 + 1, angle, circles[c].mass / particles, circles[c].innerColor, circles[c].outerColor, type, null);
+        addCircle(x, y, Math.random() * 4 + 1, angle, circles[c].mass / particles, circles[c].innerColor, circles[c].outerColor, type, circles[c].id);
         angle = (angle + 360 / particles) % 360;
     }
     circles[c].mass /= 3;
@@ -268,7 +275,7 @@ function manageCollisions() {
         for (var b = a + 1; b < circles.length; b++) {
             if (circles[a] && circles[b] && !circles[a].delete && !circles[b].delete) {
                 var l = a, s = b;
-                if(circles[a].mass < circles[b].mass) 
+                if(circles[a].mass < circles[b].mass)
                     l = b, s = a;
                 if(circles[a].mass == circles[b].mass) {
                     if(circles[a].velocity > circles[b].velocity)
@@ -349,9 +356,9 @@ function drawGrid() {
     canvas.strokeStyle = "#F6F6F6";
     canvas.globalAlpha = .15;
     canvas.beginPath();
-    for (var i = 0; i < screenWidth; i += screenHeight / 18) 
+    for (var i = 0; i < screenWidth; i += screenHeight / 18)
         canvas.moveTo(i, 0), canvas.lineTo(i, screenHeight);
-    for (var i = 0; i < screenHeight; i += screenHeight / 18) 
+    for (var i = 0; i < screenHeight; i += screenHeight / 18)
         canvas.moveTo(0, i), canvas.lineTo(screenWidth, i);
     canvas.stroke();
     canvas.globalAlpha = 1;
@@ -400,7 +407,7 @@ function drawCircles() {
             transparency = .7;
 
         var shadow = 0;
-        if(sc[i].id == circles[0].id)
+        if(sc[i].id == circles[0].id && circles[0].type == "player")
             shadow = 10;
 
         var sides = 25;
@@ -462,10 +469,34 @@ function startGravity() {
     gravityTime = (new Date).getTime();
     document.getElementById("gravityAreaWrapper").style.display = "block";
     circles = [];
-    addCircle(screenWidth / 2, screenHeight / 2, 2, 305, 50, null, null, "player", null);
-    addCircle(screenWidth / 2.5, screenHeight / 2.5, 2, 125, 49, null, null, "floater", null);
-    addCircle(screenWidth / 3.75, screenHeight / 3.75, 3, 315, 5, null, null, "floater", null);
+
+    addCircle(0, 0, 0, 305, 50, null, null, "player", null);
+    //addCircle(screenWidth / 2, screenHeight / 2, 0, 305, 50, null, null, "player", null);
+
+    // addCircle(screenWidth / 2, screenHeight / 2, 0, 305, 150, null, null, "player", null);
+    // addCircle(screenWidth / 2 + 150, screenHeight / 2, Math.sqrt((4.2*150)/75), 270, 10, null, null, "floater", null);
+    // addCircle(screenWidth / 2 - 150, screenHeight / 2, Math.sqrt((4.2*150)/75), 90, 10, null, null, "floater", null);
+
+    //addCircle(screenWidth / 2 + 40, screenHeight / 2, Math.sqrt((4.2*50)/15), 270, 10, null, null, "floater", null);
+    //addCircle(screenWidth / 2 - 40, screenHeight / 2, Math.sqrt((4.2*50)/15), 90, 10, null, null, "floater", null);
+
+    //addCircle(screenWidth / 2 + 100, screenHeight / 2, Math.sqrt((7.27*50)/75), 270, 10, null, null, "floater", null);
+    //addCircle(screenWidth / 2 - 100, screenHeight / 2, Math.sqrt((7.27*50)/75), 90, 10, null, null, "floater", null);
+
+    //addCircle(screenWidth / 2, screenHeight / 2 + 200, Math.sqrt((7.27*50)/175), 180, 10, null, null, "floater", null);
+    //addCircle(screenWidth / 2, screenHeight / 2 - 200, Math.sqrt((7.27*50)/175), 0, 10, null, null, "floater", null);
+
+    //addCircle(screenWidth / 2, screenHeight / 2, 2, 305, 50, null, null, "player", null);
+    //addCircle(screenWidth / 2.5, screenHeight / 2.5, 2, 125, 49, null, null, "floater", null);
+    //addCircle(screenWidth / 3.75, screenHeight / 3.75, 3, 315, 5, null, null, "floater", null);
     //addCircle(screenWidth / 3.75, screenHeight / 3.75, 2, 135, 5, null, null, "floater", null);
+
+    addCircle(screenWidth / 2, screenHeight / 2, 0, 360, 50, null, null, "floater", null);
+    addCircle(screenWidth / 2 - 75, screenHeight / 2, Math.sqrt((10*50)/50), 270, 25, null, null, "floater", null);
+    addCircle(screenWidth / 2 + 75, screenHeight / 2, Math.sqrt((10*50)/50), 90, 25, null, null, "floater", null);
+    addCircle(screenWidth / 2, screenHeight / 2 - 75, Math.sqrt((10*50)/50), 0, 25, null, null, "floater", null);
+    addCircle(screenWidth / 2, screenHeight / 2 + 75, Math.sqrt((10*50)/50), 180, 25, null, null, "floater", null);
+
     animloop();
 }
 
