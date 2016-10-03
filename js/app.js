@@ -34,15 +34,15 @@ function startGravity() {
     animloop();
 }
 
-var mousePosition = {},
+let mousePosition = {},
     circles = [];
 
-var foodCount = 0,
+let foodCount = 0,
     exploderCount = 0,
     floaterCount = 0,
     blackholebotCount = 0;
 
-var gravityOver = true,
+let gravityOver = true,
     gravityTime = 0,
     animloopHandle,
     screenWidth = 600,
